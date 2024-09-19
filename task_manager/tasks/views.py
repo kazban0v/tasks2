@@ -5,14 +5,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Task
 from .forms import TaskForm
 
-class TaskListView(ListView):
+class TaskListView(LoginRequiredMixin, ListView):
     model = Task
     template_name = 'tasks/task_list.html'
 
     def get_queryset(self):
-        return Task.objects.filter(user=self.request.user)
+        # Ограничиваем доступ только для определенного пользователя
+        if self.request.user.username == 'admin':  # Замените 'admin' на имя вашего пользователя
+            return Task.objects.all()  # Вернуть все задачи для этого пользователя
+        return Task.objects.filter(user=self.request.user)  # Вернуть только задачи текущего пользователя
 
-class TaskDetailView(DetailView):
+class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
     template_name = 'tasks/task_detail.html'
 
@@ -23,7 +26,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('task_list')
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
+        form.instance.user = self.request.user  # Устанавливаем пользователя задачи
         return super().form_valid(form)
 
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
