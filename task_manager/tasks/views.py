@@ -1,59 +1,53 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Task
 from .forms import TaskForm
 
-@login_required
-def task_list(request):
-    tasks = Task.objects.filter(user=request.user)
-    
-    category = request.GET.get('category')
-    priority = request.GET.get('priority')
-    
-    if category:
-        tasks = tasks.filter(category=category)
-    if priority:
-        tasks = tasks.filter(priority=priority)
-    
-    completed_tasks = tasks.filter(status='COMPLETED').count()
-    total_tasks = tasks.count()
-    completion_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-    
-    return render(request, 'tasks/task_list.html', {
-        'tasks': tasks,
-        'completion_percentage': completion_percentage,
-    })
+class TaskListView(ListView):
+    model = Task
+    template_name = 'tasks/task_list.html'
 
-@login_required
-def task_create(request):
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            task = form.save(commit=False)
-            task.user = request.user
-            task.save()
-            return redirect('task_list')
-    else:
-        form = TaskForm()
-    return render(request, 'tasks/task_form.html', {'form': form})
+    def get_queryset(self):
+        return Task.objects.filter(user=self.request.user)
 
-@login_required
-def task_update(request, pk):
-    task = get_object_or_404(Task, pk=pk, user=request.user)
-    if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)
-        if form.is_valid():
-            form.save()
-            return redirect('task_list')
-    else:
-        form = TaskForm(instance=task)
-    return render(request, 'tasks/task_form.html', {'form': form})
+class TaskDetailView(DetailView):
+    model = Task
+    template_name = 'tasks/task_detail.html'
 
-@login_required
-def task_delete(request, pk):
-    task = get_object_or_404(Task, pk=pk, user=request.user)
-    if request.method == 'POST':
-        task.delete()
-        return redirect('task_list')
-    return render(request, 'tasks/task_confirm_delete.html', {'task': task})
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/task_form.html'
+    success_url = reverse_lazy('task_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/task_form.html'
+
+    def get_queryset(self):
+        return Task.objects.filter(user=self.request.user)
+
+    def get_success_url(self):
+        return reverse_lazy('task_detail', kwargs={'pk': self.object.pk})
+
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    model = Task
+    template_name = 'tasks/task_confirm_delete.html'
+    success_url = reverse_lazy('task_list')
+
+    def get_queryset(self):
+        return Task.objects.filter(user=self.request.user)
+
+def task_completion_percentage(user):
+    total_tasks = Task.objects.filter(user=user).count()
+    completed_tasks = Task.objects.filter(user=user, status='Completed').count()
+    if total_tasks == 0:
+        return 0
+    return (completed_tasks / total_tasks) * 100

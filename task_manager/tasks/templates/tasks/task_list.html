@@ -1,68 +1,34 @@
-{% extends 'templates/base.html' %}
-
+{% extends "base.html" %}
 
 {% block content %}
-    <h1>Мои задачи</h1>
-    
-    <div class="progress mb-3">
-        <div class="progress-bar" role="progressbar" style="width: {{ completion_percentage }}%;" aria-valuenow="{{ completion_percentage }}" aria-valuemin="0" aria-valuemax="100">{{ completion_percentage|floatformat:0 }}%</div>
-    </div>
-
-    <form method="get">
-        <div class="row mb-3">
-            <div class="col">
-                <select name="category" class="form-select">
-                    <option value="">Все категории</option>
-                    {% for category in tasks|dictsort:"category"|dictsortreversed:"category"|unique:"category" %}
-                        <option value="{{ category.category }}" {% if request.GET.category == category.category %}selected{% endif %}>{{ category.category }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col">
-                <select name="priority" class="form-select">
-                    <option value="">Все приоритеты</option>
-                    <option value="LOW" {% if request.GET.priority == 'LOW' %}selected{% endif %}>Низкий</option>
-                    <option value="MEDIUM" {% if request.GET.priority == 'MEDIUM' %}selected{% endif %}>Средний</option>
-                    <option value="HIGH" {% if request.GET.priority == 'HIGH' %}selected{% endif %}>Высокий</option>
-                </select>
-            </div>
-            <div class="col">
-                <button type="submit" class="btn btn-primary">Фильтровать</button>
-            </div>
-        </div>
-    </form>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Заголовок</th>
-                <th>Статус</th>
-                <th>Приоритет</th>
-                <th>Категория</th>
-                <th>Срок</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in tasks %}
-                <tr>
-                    <td>{{ task.title }}</td>
-                    <td>{{ task.get_status_display }}</td>
-                    <td>{{ task.get_priority_display }}</td>
-                    <td>{{ task.category }}</td>
-                    <td>{{ task.due_date|default:"-" }}</td>
-                    <td>
-                        <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-primary">Редактировать</a>
-                        <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-danger">Удалить</a>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="6">У вас пока нет задач.</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{% url 'task_create' %}" class="btn btn-success">Создать новую задачу</a>
+<h1>Список задач</h1>
+<a href="{% url 'task_create' %}" class="btn btn-primary">Создать задачу</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Заголовок</th>
+            <th>Описание</th>
+            <th>Срок выполнения</th>
+            <th>Статус</th>
+            <th>Приоритет</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in object_list %}
+        <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.description }}</td>
+            <td>{{ task.due_date }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.priority }}</td>
+            <td>
+                <a href="{% url 'task_detail' task.pk %}" class="btn btn-info">Просмотр</a>
+                <a href="{% url 'task_edit' task.pk %}" class="btn btn-warning">Редактировать</a>
+                <a href="{% url 'task_delete' task.pk %}" class="btn btn-danger">Удалить</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

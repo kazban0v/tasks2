@@ -3,22 +3,23 @@ from django.contrib.auth.models import User
 
 class Task(models.Model):
     STATUS_CHOICES = [
-        ('NOT_STARTED', 'Не начато'),
-        ('IN_PROGRESS', 'В процессе'),
-        ('COMPLETED', 'Завершено'),
+        ('Not Started', 'Не начато'),
+        ('In Progress', 'В процессе'),
+        ('Completed', 'Завершено'),
     ]
+
     PRIORITY_CHOICES = [
-        ('LOW', 'Низкий'),
-        ('MEDIUM', 'Средний'),
-        ('HIGH', 'Высокий'),
+        ('Low', 'Низкий'),
+        ('Medium', 'Средний'),
+        ('High', 'Высокий'),
     ]
-    
+
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
-    due_date = models.DateField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NOT_STARTED')
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='MEDIUM')
-    category = models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Not Started')
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='Low')
+    category = models.CharField(max_length=100, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
